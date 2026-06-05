@@ -12,8 +12,8 @@ import com.jobpilot.jobpilot_backend.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.jobpilot.jobpilot_backend.job.dto.JobMatchResponse;
-
-
+import com.jobpilot.jobpilot_backend.jobskill.entity.JobSkill;
+import com.jobpilot.jobpilot_backend.jobskill.repository.JobSkillRepository;
 import java.util.List;
 
 @Service
@@ -23,6 +23,9 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final SkillRepository skillRepository;
     private final UserRepository userRepository;
+    private final JobSkillRepository jobSkillRepository;
+
+
 
     @Override
     public List<JobResponse> getAllJobs() {
@@ -65,26 +68,29 @@ public class JobServiceImpl implements JobService {
                 .stream()
                 .map(job -> {
 
-                    String description =
-                            job.getDescription()
-                                    .toLowerCase();
+                    List<String> jobSkills =
+                            jobSkillRepository.findByJobId(job.getId())
+                                    .stream()
+                                    .map(JobSkill::getSkillName)
+                                    .map(String::toLowerCase)
+                                    .toList();
 
                     List<String> matchedSkills =
                             userSkills.stream()
-                                    .filter(description::contains)
+                                    .filter(jobSkills::contains)
                                     .toList();
 
                     List<String> missingSkills =
-                            userSkills.stream()
+                            jobSkills.stream()
                                     .filter(skill ->
-                                            !description.contains(skill))
+                                            !userSkills.contains(skill))
                                     .toList();
 
                     int score =
                             userSkills.isEmpty()
                                     ? 0
                                     : (int) ((matchedSkills.size() * 100)
-                                    / userSkills.size());
+                                    / jobSkills.size());
 
                     return JobMatchResponse.builder()
                             .jobId(job.getId())
