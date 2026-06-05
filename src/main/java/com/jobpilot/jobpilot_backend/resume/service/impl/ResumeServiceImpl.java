@@ -13,6 +13,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.jobpilot.jobpilot_backend.resume.parser.ResumeParserService;
+import com.jobpilot.jobpilot_backend.resume.service.ResumeAnalysisService;
+import com.jobpilot.jobpilot_backend.resume.dto.analysis.ResumeAnalysisResponse;
+import com.jobpilot.jobpilot_backend.skill.service.SkillService;
+
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +29,9 @@ public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
+    private final ResumeParserService resumeParserService;
+    private final ResumeAnalysisService resumeAnalysisService;
+    private final SkillService skillService;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -92,5 +100,41 @@ public class ResumeServiceImpl implements ResumeService {
                     "Failed to upload resume"
             );
         }
+    }
+
+    @Override
+    public ResumeAnalysisResponse analyzeResume() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new BadRequestException("User not found"));
+
+
+        Resume resume = resumeRepository
+                .findTopByUserIdOrderByUploadedAtDesc(user.getId())
+                .orElseThrow(() ->
+                        new BadRequestException("Resume not found"));
+
+        String resumeText =
+                resumeParserService.extractText(
+                        resume.getFilePath()
+                );
+
+        ResumeAnalysisResponse response =
+                resumeAnalysisService.analyze(
+                        resumeText
+                );
+
+        skillService.saveSkills(
+                user.getId(),
+                response.getSkills()
+        );
+
+        return response;
     }
 }

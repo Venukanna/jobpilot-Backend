@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import com.jobpilot.jobpilot_backend.resume.dto.analysis.ResumeAnalysisResponse;
 
 @RestController
 @RequestMapping("/api/v1/resume")
@@ -29,4 +29,17 @@ public class ResumeController {
                 .data(response)
                 .build();
     }
+    @GetMapping("/analyze")
+    public ApiResponse<ResumeAnalysisResponse> analyzeResume() {
+
+        ResumeAnalysisResponse response =
+                resumeService.analyzeResume();
+
+        return ApiResponse.<ResumeAnalysisResponse>builder()
+                .success(true)
+                .message("Resume analyzed successfully")
+                .data(response)
+                .build();
+    }
+
 }
