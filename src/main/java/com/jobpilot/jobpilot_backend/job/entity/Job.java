@@ -28,6 +28,14 @@ public class Job {
 
     private String jobUrl;
 
+    private String source;
+
+    private String externalJobId;
+
+    private LocalDateTime postedDate;
+
+    private LocalDateTime lastSeen;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

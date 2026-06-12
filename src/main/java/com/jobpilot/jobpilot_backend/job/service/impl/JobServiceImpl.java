@@ -86,11 +86,15 @@ public class JobServiceImpl implements JobService {
                                             !userSkills.contains(skill))
                                     .toList();
 
-                    int score =
-                            userSkills.isEmpty()
-                                    ? 0
-                                    : (int) ((matchedSkills.size() * 100)
-                                    / jobSkills.size());
+                    int score = 0;
+
+                    if (!userSkills.isEmpty()
+                            && !jobSkills.isEmpty()) {
+
+                        score =
+                                (matchedSkills.size() * 100)
+                                        / jobSkills.size();
+                    }
 
                     return JobMatchResponse.builder()
                             .jobId(job.getId())
